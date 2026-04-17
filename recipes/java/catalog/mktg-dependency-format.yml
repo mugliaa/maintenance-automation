@@ -4,74 +4,58 @@ name: com.aoins.mktg.java.GradleDependencyFormat
 displayName: MKTG Gradle Dependency Format
 description: Standardize Gradle dependency declarations to [type] '[group]:[artifact]:[version]' or '@ext' variant, and strip configuration closures.
 recipeList:
-
-  # ── Pre-processing: bubble ext to end of map (3 passes cover all positions) ──
-  # Each pass swaps ext with the next group/name/version property to its right.
-  # Three passes guarantee ext reaches the last position regardless of where it started.
+  # 'ext' positioning
+  - org.openrewrite.text.FindAndReplace:
+      find: "\\bext:\\s*(['\"][^'\"]+['\"])\\s*,\\s*((?:group|name|version):\\s*['\"][^'\"]+['\"])"
+      replace: "$2, ext: $1"
+      regex: true
+      dotAll: true
+      filePattern: "**/*.gradle"
 
   - org.openrewrite.text.FindAndReplace:
       find: "\\bext:\\s*(['\"][^'\"]+['\"])\\s*,\\s*((?:group|name|version):\\s*['\"][^'\"]+['\"])"
       replace: "$2, ext: $1"
       regex: true
       dotAll: true
+      filePattern: "**/*.gradle"
 
   - org.openrewrite.text.FindAndReplace:
       find: "\\bext:\\s*(['\"][^'\"]+['\"])\\s*,\\s*((?:group|name|version):\\s*['\"][^'\"]+['\"])"
       replace: "$2, ext: $1"
       regex: true
       dotAll: true
+      filePattern: "**/*.gradle"
 
+  # 'version' positioning
   - org.openrewrite.text.FindAndReplace:
-      find: "\\bext:\\s*(['\"][^'\"]+['\"])\\s*,\\s*((?:group|name|version):\\s*['\"][^'\"]+['\"])"
-      replace: "$2, ext: $1"
+      find: "\\bversion:\\s*(['\"][^'\"]+['\"])\\s*,\\s*((?:group|name):\\s*['\"][^'\"]+['\"])"
+      replace: "$2, version: $1"
       regex: true
       dotAll: true
+      filePattern: "**/*.gradle"
 
-  # ── Map notation with ext at end (all 6 orderings of group/name/version) ──
+  - org.openrewrite.text.FindAndReplace:
+      find: "\\bversion:\\s*(['\"][^'\"]+['\"])\\s*,\\s*((?:group|name):\\s*['\"][^'\"]+['\"])"
+      replace: "$2, version: $1"
+      regex: true
+      dotAll: true
+      filePattern: "**/*.gradle"
 
-  # group, name, version, ext  →  $2:$3:$4@$5
+  # 'group' positioning
+  - org.openrewrite.text.FindAndReplace:
+      find: "\\bname:\\s*(['\"][^'\"]+['\"])\\s*,\\s*group:\\s*(['\"][^'\"]+['\"])"
+      replace: "group: $2, name: $1"
+      regex: true
+      dotAll: true
+      filePattern: "**/*.gradle"
+
+  # group, name, version, ext
   - org.openrewrite.text.FindAndReplace:
       find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*ext:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
       replace: "$1 '$2:$3:$4@$5'"
       regex: true
       dotAll: true
-
-  # group, version, name, ext  →  $2:$4:$3@$5
-  - org.openrewrite.text.FindAndReplace:
-      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*ext:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
-      replace: "$1 '$2:$4:$3@$5'"
-      regex: true
-      dotAll: true
-
-  # name, group, version, ext  →  $3:$2:$4@$5
-  - org.openrewrite.text.FindAndReplace:
-      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*ext:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
-      replace: "$1 '$3:$2:$4@$5'"
-      regex: true
-      dotAll: true
-
-  # name, version, group, ext  →  $4:$2:$3@$5
-  - org.openrewrite.text.FindAndReplace:
-      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*ext:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
-      replace: "$1 '$4:$2:$3@$5'"
-      regex: true
-      dotAll: true
-
-  # version, group, name, ext  →  $3:$4:$2@$5
-  - org.openrewrite.text.FindAndReplace:
-      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*ext:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
-      replace: "$1 '$3:$4:$2@$5'"
-      regex: true
-      dotAll: true
-
-  # version, name, group, ext  →  $4:$3:$2@$5
-  - org.openrewrite.text.FindAndReplace:
-      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*ext:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
-      replace: "$1 '$4:$3:$2@$5'"
-      regex: true
-      dotAll: true
-
-  # ── Map notation without ext (all 6 orderings) ──
+      filePattern: "**/*.gradle"
 
   # group, name, version
   - org.openrewrite.text.FindAndReplace:
@@ -79,64 +63,50 @@ recipeList:
       replace: "$1 '$2:$3:$4'"
       regex: true
       dotAll: true
+      filePattern: "**/*.gradle"
 
-  # group, version, name
+  # group, name, ext (no version)
   - org.openrewrite.text.FindAndReplace:
-      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
-      replace: "$1 '$2:$4:$3'"
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*ext:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
+      replace: "$1 '$2:$3@$4'"
       regex: true
       dotAll: true
+      filePattern: "**/*.gradle"
 
-  # name, group, version
+  # group, name (no version, no ext)
   - org.openrewrite.text.FindAndReplace:
-      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
-      replace: "$1 '$3:$2:$4'"
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
+      replace: "$1 '$2:$3'"
       regex: true
       dotAll: true
+      filePattern: "**/*.gradle"
 
-  # name, version, group
-  - org.openrewrite.text.FindAndReplace:
-      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
-      replace: "$1 '$4:$2:$3'"
-      regex: true
-      dotAll: true
-
-  # version, group, name
-  - org.openrewrite.text.FindAndReplace:
-      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
-      replace: "$1 '$3:$4:$2'"
-      regex: true
-      dotAll: true
-
-  # version, name, group
-  - org.openrewrite.text.FindAndReplace:
-      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
-      replace: "$1 '$4:$3:$2'"
-      regex: true
-      dotAll: true
-
-  # ── String notation – parenthesized with config closure (one level of nested braces) ──
+  # string notation: parenthesized with a config closure, e.g. implementation('g:a:v') { ... }
   - org.openrewrite.text.FindAndReplace:
       find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\(['\"]([^'\"]+)['\"]\\)\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}"
       replace: "$1 '$2'"
       regex: true
       dotAll: true
+      filePattern: "**/*.gradle"
 
-  # ── String notation – parenthesized without config closure ──
+  # string notation: parenthesized without a config closure, e.g. implementation('g:a:v')
   - org.openrewrite.text.FindAndReplace:
       find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\(['\"]([^'\"]+)['\"]\\)"
       replace: "$1 '$2'"
       regex: true
+      filePattern: "**/*.gradle"
 
-  # ── String notation – space notation with config closure (one level of nested braces) ──
+  # string notation: space style with a config closure, e.g. implementation 'g:a:v' { ... }
   - org.openrewrite.text.FindAndReplace:
       find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s+['\"]([^'\"]+)['\"]\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}"
       replace: "$1 '$2'"
       regex: true
       dotAll: true
+      filePattern: "**/*.gradle"
 
-  # ── String notation – double-quoted space notation without closure (normalize quotes) ──
+  # string notation: double-quoted without a closure, normalize to single quotes, e.g. implementation "g:a:v"
   - org.openrewrite.text.FindAndReplace:
       find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s+\"([^\"]+)\""
       replace: "$1 '$2'"
       regex: true
+      filePattern: "**/*.gradle"
