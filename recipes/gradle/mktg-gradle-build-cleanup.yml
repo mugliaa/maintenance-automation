@@ -1,0 +1,20 @@
+type: specs.openrewrite.org/v1beta/recipe
+name: com.aoins.mktg.gradle.GradleBuildCleanup
+displayName: MKTG Gradle Build Cleanup
+description: Removes the printMessageAboutRunningServer task and standardizes the jacocoTestReport block.
+recipeList:
+  # Remove the printMessageAboutRunningServer task block, including its trailing newline
+  - org.openrewrite.text.FindAndReplace:
+      find: "\\btask\\s+printMessageAboutRunningServer\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}\\n?"
+      replace: ""
+      regex: true
+      dotAll: true
+      filePattern: "**/*.gradle"
+
+  # Replace any jacocoTestReport block with the standard xml report configuration
+  - org.openrewrite.text.FindAndReplace:
+      find: "\\bjacocoTestReport\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}"
+      replace: "jacocoTestReport {\n    reports.xml.required = true\n}"
+      regex: true
+      dotAll: true
+      filePattern: "**/*.gradle"
