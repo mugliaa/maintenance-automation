@@ -5,7 +5,7 @@ description: Removes the printMessageAboutRunningServer task and standardizes th
 recipeList:
   # Remove the printMessageAboutRunningServer task block, including its trailing newline
   - org.openrewrite.text.FindAndReplace:
-      find: "^(\\s*)task\\s+printMessageAboutRunningServer\\s*\\{.*?^\\1\\}\\n?"
+      find: "^(\\s*)task\\s+printMessageAboutRunningServer\\s*\\{.*?^\\1\\}\\n?\\n?"
       replace: ""
       regex: true
       dotAll: true
