@@ -2,10 +2,76 @@
 type: specs.openrewrite.org/v1beta/recipe
 name: com.aoins.mktg.java.GradleDependencyFormat
 displayName: MKTG Gradle Dependency Format
-description: Standardize Gradle dependency declarations to [type] '[group]:[artifact]:[version]' and strip configuration closures.
+description: Standardize Gradle dependency declarations to [type] '[group]:[artifact]:[version]' or '@ext' variant, and strip configuration closures.
 recipeList:
 
-  # ── Map notation (all 6 property orderings, optional parens, optional closure, single/multi-line) ──
+  # ── Pre-processing: bubble ext to end of map (3 passes cover all positions) ──
+  # Each pass swaps ext with the next group/name/version property to its right.
+  # Three passes guarantee ext reaches the last position regardless of where it started.
+
+  - org.openrewrite.text.FindAndReplace:
+      find: "\\bext:\\s*(['\"][^'\"]+['\"])\\s*,\\s*((?:group|name|version):\\s*['\"][^'\"]+['\"])"
+      replace: "$2, ext: $1"
+      regex: true
+      dotAll: true
+
+  - org.openrewrite.text.FindAndReplace:
+      find: "\\bext:\\s*(['\"][^'\"]+['\"])\\s*,\\s*((?:group|name|version):\\s*['\"][^'\"]+['\"])"
+      replace: "$2, ext: $1"
+      regex: true
+      dotAll: true
+
+  - org.openrewrite.text.FindAndReplace:
+      find: "\\bext:\\s*(['\"][^'\"]+['\"])\\s*,\\s*((?:group|name|version):\\s*['\"][^'\"]+['\"])"
+      replace: "$2, ext: $1"
+      regex: true
+      dotAll: true
+
+  # ── Map notation with ext at end (all 6 orderings of group/name/version) ──
+
+  # group, name, version, ext  →  $2:$3:$4@$5
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*ext:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
+      replace: "$1 '$2:$3:$4@$5'"
+      regex: true
+      dotAll: true
+
+  # group, version, name, ext  →  $2:$4:$3@$5
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*ext:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
+      replace: "$1 '$2:$4:$3@$5'"
+      regex: true
+      dotAll: true
+
+  # name, group, version, ext  →  $3:$2:$4@$5
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*ext:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
+      replace: "$1 '$3:$2:$4@$5'"
+      regex: true
+      dotAll: true
+
+  # name, version, group, ext  →  $4:$2:$3@$5
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*ext:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
+      replace: "$1 '$4:$2:$3@$5'"
+      regex: true
+      dotAll: true
+
+  # version, group, name, ext  →  $3:$4:$2@$5
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*ext:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
+      replace: "$1 '$3:$4:$2@$5'"
+      regex: true
+      dotAll: true
+
+  # version, name, group, ext  →  $4:$3:$2@$5
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*ext:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
+      replace: "$1 '$4:$3:$2@$5'"
+      regex: true
+      dotAll: true
+
+  # ── Map notation without ext (all 6 orderings) ──
 
   # group, name, version
   - org.openrewrite.text.FindAndReplace:
