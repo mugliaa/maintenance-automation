@@ -1,0 +1,76 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: com.aoins.mktg.java.GradleDependencyFormat
+displayName: MKTG Gradle Dependency Format
+description: Standardize Gradle dependency declarations to [type] '[group]:[artifact]:[version]' and strip configuration closures.
+recipeList:
+
+  # ── Map notation (all 6 property orderings, optional parens, optional closure, single/multi-line) ──
+
+  # group, name, version
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
+      replace: "$1 '$2:$3:$4'"
+      regex: true
+      dotAll: true
+
+  # group, version, name
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
+      replace: "$1 '$2:$4:$3'"
+      regex: true
+      dotAll: true
+
+  # name, group, version
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
+      replace: "$1 '$3:$2:$4'"
+      regex: true
+      dotAll: true
+
+  # name, version, group
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
+      replace: "$1 '$4:$2:$3'"
+      regex: true
+      dotAll: true
+
+  # version, group, name
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
+      replace: "$1 '$3:$4:$2'"
+      regex: true
+      dotAll: true
+
+  # version, name, group
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s*\\(?\\s*version:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*name:\\s*['\"]([^'\"]+)['\"]\\s*,\\s*group:\\s*['\"]([^'\"]+)['\"]\\s*\\)?(?:\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\})?"
+      replace: "$1 '$4:$3:$2'"
+      regex: true
+      dotAll: true
+
+  # ── String notation – parenthesized with config closure (one level of nested braces) ──
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\(['\"]([^'\"]+)['\"]\\)\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}"
+      replace: "$1 '$2'"
+      regex: true
+      dotAll: true
+
+  # ── String notation – parenthesized without config closure ──
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\(['\"]([^'\"]+)['\"]\\)"
+      replace: "$1 '$2'"
+      regex: true
+
+  # ── String notation – space notation with config closure (one level of nested braces) ──
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s+['\"]([^'\"]+)['\"]\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}"
+      replace: "$1 '$2'"
+      regex: true
+      dotAll: true
+
+  # ── String notation – double-quoted space notation without closure (normalize quotes) ──
+  - org.openrewrite.text.FindAndReplace:
+      find: "(implementation|api|compileOnly|runtimeOnly|testImplementation|testRuntimeOnly|testCompileOnly|annotationProcessor|kapt|classpath)\\s+\"([^\"]+)\""
+      replace: "$1 '$2'"
+      regex: true

@@ -1,0 +1,60 @@
+initscript {
+    repositories {
+        maven {
+            url = 'https://artifactory.aoins.com/artifactory/gradle-plugins'
+        }
+    }
+    dependencies {
+        classpath 'org.openrewrite:plugin:latest.release'
+    }
+}
+
+allprojects { proj ->
+    proj.pluginManager.withPlugin('java') {
+        proj.apply plugin: org.openrewrite.gradle.RewritePlugin
+
+        proj.repositories {
+            ['libs-release', 'libs-snapshot'].each { String repositories ->
+                ivy {
+                    url = "https://artifactory.aoins.com/artifactory/$repositories"
+                    patternLayout {
+                        artifact '[organization]/[module]/[revision]/[artifact]-[revision].[ext]'
+                        ivy '[organization]/[module]/[revision]/ivy-[revision].xml'
+                        m2compatible = true
+                    }
+                }
+                maven {
+                    url = "https://artifactory.aoins.com/artifactory/$repositories"
+                    metadataSources {
+                        gradleMetadata()
+                        mavenPom()
+                        artifact()
+                    }
+                }
+            }
+        }
+
+        proj.dependencies {
+            rewrite proj.platform('org.openrewrite.recipe:rewrite-recipe-bom:latest.release')
+
+            // Common recipe modules — add or remove based on which recipes you use.
+            rewrite 'org.openrewrite.recipe:rewrite-migrate-java'
+            rewrite 'org.openrewrite.recipe:rewrite-spring'
+            rewrite 'org.openrewrite.recipe:rewrite-testing-frameworks'
+            rewrite 'org.openrewrite.recipe:rewrite-static-analysis'
+            rewrite 'org.openrewrite.recipe:rewrite-logging-frameworks'
+        }
+
+        def recipeName = System.getProperty('rewrite.activeRecipe', '')
+        def configPath = System.getProperty('rewrite.configFile', '')
+
+        proj.rewrite {
+            if (recipeName) {
+                activeRecipe(recipeName)
+            }
+            if (configPath) {
+                configFile = proj.file(configPath)
+            }
+        }
+    }
+}

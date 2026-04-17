@@ -1,0 +1,10 @@
+type: spec.openrewrite.org/v1beta/recipe
+name: com.aoins.mktg.java.AllMaintenanceRecipes
+displayName: MKTG Maintenance Updates
+description: Composite recipe that applies all MKTG maintenance recipes.
+recipeList:
+  - com.aoins.mktg.java.OrderImports
+  - com.aoins.mktg.java.RemoveSonarPlugin
+  - com.aoins.mktg.java.GradleBuildCleanup
+  - com.aoins.mktg.java.GradleDependencyRepositories
+  - com.aoins.mktg.java.GradleDependencyFormat
