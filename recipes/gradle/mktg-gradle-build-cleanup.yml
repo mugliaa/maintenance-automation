@@ -5,16 +5,18 @@ description: Removes the printMessageAboutRunningServer task and standardizes th
 recipeList:
   # Remove the printMessageAboutRunningServer task block, including its trailing newline
   - org.openrewrite.text.FindAndReplace:
-      find: "\\btask\\s+printMessageAboutRunningServer\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}\\n?"
+      find: "^(\\s*)task\\s+printMessageAboutRunningServer\\s*\\{.*?^\\1\\}\\n?"
       replace: ""
       regex: true
       dotAll: true
+      multiline: true
       filePattern: "**/*.gradle"
 
   # Replace any jacocoTestReport block with the standard xml report configuration
   - org.openrewrite.text.FindAndReplace:
-      find: "\\bjacocoTestReport\\s*\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}"
-      replace: "jacocoTestReport {\n    reports.xml.required = true\n}"
+      find: "^(\\s*)jacocoTestReport\\s*\\{.*?^\\1\\}"
+      replace: "$1jacocoTestReport {\n$1    reports.xml.required = true\n$1}"
       regex: true
       dotAll: true
+      multiline: true
       filePattern: "**/*.gradle"
